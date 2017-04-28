@@ -2,4 +2,6 @@
     <string name="app_name">Find a Movie</string>
 
     <string name="API_KEY">a755518bdaba7680a8b160f485220377</string>
+    <string name="no_results">No results found</string>
+    <string name="default_movie_image">https://cdn.pixabay.com/photo/2015/01/11/09/21/film-596011_960_720.png</string>
 </resources>
