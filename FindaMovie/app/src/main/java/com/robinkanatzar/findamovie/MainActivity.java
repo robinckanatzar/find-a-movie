@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private MovieAdapter movieAdapter;
     private Subscription subscription = Subscriptions.empty();
     private Integer mPageNumber = 1;
+    private Integer mItemsPerPage = 20;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,7 +106,14 @@ public class MainActivity extends AppCompatActivity {
                                 currentPage = searchResponse.getPage();
                                 totalPages = searchResponse.getTotalPages();
 
-                                for (int i = 0; i < 19; i++) {
+                                // TODO add pagination logic
+                                if (currentPage == totalPages) {
+                                    // only load the number of items on the page
+                                } else if (currentPage < totalPages) {
+                                    // when 17 is shown, load the next 20 items
+                                }
+
+                                for (int i = 0; i < mItemsPerPage; i++) {
                                     if (searchResponse.getResults().get(i).getOriginalTitle() != null) {
                                         title = searchResponse.getResults().get(i).getOriginalTitle().toString();
                                         Timber.d("i = " + i + " " + title);
@@ -132,7 +140,6 @@ public class MainActivity extends AppCompatActivity {
                             } else {
                                 Toast.makeText(MainActivity.this, getString(R.string.no_results), Toast.LENGTH_SHORT).show();
                             }
-
                         }
                     });
         }
