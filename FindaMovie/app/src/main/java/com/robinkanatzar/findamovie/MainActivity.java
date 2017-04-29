@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         movieList.clear();
         dismissKeyboard();
 
-        mQueryString = mQuery.getText().toString().replace(" ", "_");
+        mQueryString = mQuery.getText().toString().replace(" ", "%20");
         if (mQueryString == "" || mQueryString.isEmpty() || mQueryString == null) {
             Toast.makeText(this, "Please enter a city.", Toast.LENGTH_SHORT).show();
         } else {
@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onNext(SearchResponse searchResponse) {
 
-                            if(searchResponse.getTotalResults() != null) {
+                            if(searchResponse.getTotalResults() != 0) {
                                 totalResults = searchResponse.getTotalResults();
                                 currentPage = searchResponse.getPage();
                                 totalPages = searchResponse.getTotalPages();
@@ -111,6 +111,10 @@ public class MainActivity extends AppCompatActivity {
                                     // only load the number of items on the page
                                 } else if (currentPage < totalPages) {
                                     // when 17 is shown, load the next 20 items
+                                }
+
+                                if (totalResults < mItemsPerPage) {
+                                    mItemsPerPage = totalResults;
                                 }
 
                                 for (int i = 0; i < mItemsPerPage; i++) {
