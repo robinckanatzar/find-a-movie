@@ -106,13 +106,6 @@ public class MainActivity extends AppCompatActivity {
                                 currentPage = searchResponse.getPage();
                                 totalPages = searchResponse.getTotalPages();
 
-                                // TODO add pagination logic
-                                if (currentPage == totalPages) {
-                                    // only load the number of items on the page
-                                } else if (currentPage < totalPages) {
-                                    // when 17 is shown, load the next 20 items
-                                }
-
                                 if (totalResults < mItemsPerPage) {
                                     mItemsPerPage = totalResults;
                                 }
@@ -141,6 +134,14 @@ public class MainActivity extends AppCompatActivity {
 
                                     addMovieToList(title, description, iconUrl);
                                 }
+
+                                if (currentPage < totalPages) {
+                                    // set onScroll listener to load more data
+
+                                    // if item 19 is displayed && currentPage < totalPages
+                                    // then there is more data to load
+                                }
+
                             } else {
                                 Toast.makeText(MainActivity.this, getString(R.string.no_results), Toast.LENGTH_SHORT).show();
                             }
