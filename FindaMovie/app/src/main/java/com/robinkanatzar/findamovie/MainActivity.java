@@ -30,6 +30,7 @@ import rx.schedulers.Schedulers;
 import rx.subscriptions.Subscriptions;
 import timber.log.Timber;
 
+import static android.nfc.tech.MifareUltralight.PAGE_SIZE;
 import static android.view.View.GONE;
 
 public class MainActivity extends AppCompatActivity {
@@ -61,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
         movieAdapter = new MovieAdapter(movieList);
         mResults.setLayoutManager(new LinearLayoutManager(this));
         mResults.setAdapter(movieAdapter);
+
+
     }
 
     @OnClick(R.id.btn_search) void search() {
@@ -140,6 +143,9 @@ public class MainActivity extends AppCompatActivity {
 
                                     // if item 19 is displayed && currentPage < totalPages
                                     // then there is more data to load
+
+                                    // source for pagination:
+                                    // https://medium.com/@etiennelawlor/pagination-with-recyclerview-1cb7e66a502b
                                 }
 
                             } else {
