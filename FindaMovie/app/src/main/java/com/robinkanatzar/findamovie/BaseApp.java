@@ -1,7 +1,6 @@
 package com.robinkanatzar.findamovie;
 
 import android.app.Application;
-import android.util.Log;
 
 import timber.log.Timber;
 
@@ -17,10 +16,9 @@ public class BaseApp extends Application {
 
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
-            Log.d("RCK", "in app onCreate in debug config");
-            Timber.i("debug config selected");
+
         } else {
-            Log.d("RCK", "in app onCreate but not in debug config");
+
         }
     }
 }

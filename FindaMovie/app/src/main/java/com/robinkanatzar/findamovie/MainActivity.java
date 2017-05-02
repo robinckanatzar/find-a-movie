@@ -29,13 +29,9 @@ import rx.schedulers.Schedulers;
 import rx.subscriptions.Subscriptions;
 import timber.log.Timber;
 
-import static android.nfc.tech.MifareUltralight.PAGE_SIZE;
 import static android.view.View.GONE;
 
 public class MainActivity extends AppCompatActivity {
-
-    // API Documentation for The Movie DB
-    // https://developers.themoviedb.org/3/search/search-people
 
     @BindView(R.id.et_query) EditText mQuery;
     @BindView(R.id.rv_results) RecyclerView mResults;
@@ -49,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
     private Integer mItemsPerPage = 20;
     private LinearLayoutManager layoutManager;
     private Boolean isLoading = false;
-    private Boolean isLastPage = false;
 
     private RecyclerView.OnScrollListener recyclerViewOnScrollListener = new RecyclerView.OnScrollListener() {
         @Override
@@ -61,27 +56,10 @@ public class MainActivity extends AppCompatActivity {
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
             int visibleItemCount = layoutManager.getChildCount();
-            int totalItemCount = layoutManager.getItemCount();
             int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
 
-            Timber.i("visibleItemCount: " + visibleItemCount);
-            Timber.i("totalItemCount: " + totalItemCount);
-            Timber.i("firstVisibleItemPosition: " + firstVisibleItemPosition);
-            Timber.i("isLoading: " + isLoading);
-            Timber.i("isLastPage: " + isLastPage);
-            Timber.i("PAGE_SIZE: " + PAGE_SIZE);
-
-            // when firstVisibleItemPosition == 16 (out of 20), load more
-
-            if (!isLoading && !isLastPage) {
-                if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount
-                        && firstVisibleItemPosition >= 0
-                        && totalItemCount >= PAGE_SIZE) {
-                    loadMoreItems();
-                }
-            }
-
-            if (firstVisibleItemPosition == 16) {
+            if (firstVisibleItemPosition == ((mPageNumber * 20) - 5) && !isLoading) {
+                isLoading = true;
                 loadMoreItems();
             }
         }
@@ -94,14 +72,10 @@ public class MainActivity extends AppCompatActivity {
 
         ButterKnife.bind(this);
 
-        Timber.i("Inside MainActivity onCreate");
-
         movieAdapter = new MovieAdapter(movieList);
-
         layoutManager = new LinearLayoutManager(this);
         mResults.setLayoutManager(layoutManager);
         mResults.setAdapter(movieAdapter);
-
         mResults.addOnScrollListener(recyclerViewOnScrollListener);
     }
 
@@ -109,14 +83,18 @@ public class MainActivity extends AppCompatActivity {
 
         movieList.clear();
         dismissKeyboard();
+        if (!subscription.isUnsubscribed()) {
+            subscription.unsubscribe();
+        }
 
         mQueryString = mQuery.getText().toString().replace(" ", "%20");
+
         if (mQueryString == "" || mQueryString.isEmpty() || mQueryString == null) {
-            Toast.makeText(this, "Please enter a city.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.error_enter_query), Toast.LENGTH_LONG).show();
         } else {
             mProgressSpinner.setVisibility(View.VISIBLE);
 
-            rx.Observable<SearchResponse> observable = new RestClient().getService().searchForMovieFirstPage(getString(R.string.API_KEY), mPageNumber, mQueryString);
+            rx.Observable<SearchResponse> observable = new RestClient().getService().searchForMovie(getString(R.string.API_KEY), mPageNumber, mQueryString);
 
             subscription = observable.subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
@@ -128,11 +106,14 @@ public class MainActivity extends AppCompatActivity {
                         int totalResults;
                         int currentPage;
                         int totalPages;
+                        int totalResultsOnPage;
+                        int max;
 
                         @Override
                         public void onCompleted() {
                             movieAdapter.notifyDataSetChanged();
                             mProgressSpinner.setVisibility(GONE);
+                            isLoading = false;
                         }
 
                         @Override
@@ -147,29 +128,29 @@ public class MainActivity extends AppCompatActivity {
                                 totalResults = searchResponse.getTotalResults();
                                 currentPage = searchResponse.getPage();
                                 totalPages = searchResponse.getTotalPages();
+                                totalResultsOnPage = totalResults - (currentPage - 1) * mItemsPerPage;
 
-                                if (totalResults < mItemsPerPage) {
-                                    mItemsPerPage = totalResults;
+                                if (totalResultsOnPage < mItemsPerPage) {
+                                    max = totalResultsOnPage;
+                                } else {
+                                    max = 20;
                                 }
 
-                                for (int i = 0; i < mItemsPerPage; i++) {
+                                for (int i = 0; i < max; i++) {
                                     if (searchResponse.getResults().get(i).getOriginalTitle() != null) {
                                         title = searchResponse.getResults().get(i).getOriginalTitle().toString();
-                                        Timber.d("i = " + i + " " + title);
                                     } else {
                                         title = "";
                                     }
 
-                                    if(searchResponse.getResults().get(i).getOverview() != null) {
+                                    if (searchResponse.getResults().get(i).getOverview() != null) {
                                         description = searchResponse.getResults().get(i).getOverview().toString();
-                                        Timber.d("i = " + i + " " + description);
                                     } else {
                                         description = "";
                                     }
 
                                     if (searchResponse.getResults().get(i).getPosterPath() != null) {
                                         iconUrl = "http://image.tmdb.org/t/p/w500" + searchResponse.getResults().get(i).getPosterPath().toString();
-                                        Timber.d("i = " + i + " " + iconUrl);
                                     } else {
                                         iconUrl = getString(R.string.default_movie_image);
                                     }
@@ -185,6 +166,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private void dismissKeyboard() {
         View view = this.getCurrentFocus();
 
@@ -198,11 +180,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadMoreItems() {
-        isLoading = true;
 
         mPageNumber += 1;
 
-        rx.Observable<SearchResponse> observable = new RestClient().getService().searchForMovieFirstPage(getString(R.string.API_KEY), mPageNumber, mQueryString);
+        rx.Observable<SearchResponse> observable = new RestClient().getService().searchForMovie(getString(R.string.API_KEY), mPageNumber, mQueryString);
 
         subscription = observable.subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -221,6 +202,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onCompleted() {
                         movieAdapter.notifyDataSetChanged();
                         mProgressSpinner.setVisibility(GONE);
+                        isLoading = false;
                     }
 
                     @Override
@@ -231,21 +213,36 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onNext(SearchResponse searchResponse) {
 
-                        totalResults = searchResponse.getTotalResults(); // 57
-                        currentPage = searchResponse.getPage(); // 2
-                        totalPages = searchResponse.getTotalPages(); // 3
-                        totalResultsOnPage = totalResults - (currentPage - 1) * mItemsPerPage; // 57 - (1)(20) => 37
+                        totalResults = searchResponse.getTotalResults();
+                        currentPage = searchResponse.getPage();
+                        totalPages = searchResponse.getTotalPages();
+                        totalResultsOnPage = totalResults - (currentPage - 1) * mItemsPerPage;
 
-                        if (totalResultsOnPage < 20) { // 37 !< 20
+                        if (totalResultsOnPage < 20) {
                             max = totalResultsOnPage;
                         } else {
                             max = 20;
                         }
 
                         for (int i = 0; i < max; i++) {
-                            title = searchResponse.getResults().get(i).getOriginalTitle().toString();
-                            description = searchResponse.getResults().get(i).getOverview().toString();
-                            iconUrl = "http://image.tmdb.org/t/p/w500" + searchResponse.getResults().get(i).getPosterPath().toString();
+                            if (searchResponse.getResults().get(i).getOriginalTitle() != null) {
+                                title = searchResponse.getResults().get(i).getOriginalTitle().toString();
+                            } else {
+                                title = "";
+                            }
+
+                            if(searchResponse.getResults().get(i).getOverview() != null) {
+                                description = searchResponse.getResults().get(i).getOverview().toString();
+                            } else {
+                                description = "";
+                            }
+
+                            if (searchResponse.getResults().get(i).getPosterPath() != null) {
+                                iconUrl = getString(R.string.icon_url_base_string) + searchResponse.getResults().get(i).getPosterPath().toString();
+                            } else {
+                                iconUrl = getString(R.string.default_movie_image);
+                            }
+
                             addMovieToList(title, description, iconUrl);
                         }
                     }
