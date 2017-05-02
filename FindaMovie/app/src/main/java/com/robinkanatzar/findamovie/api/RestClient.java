@@ -10,11 +10,13 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RestClient {
 
+    private static final String BASE_URL = "https://api.themoviedb.org/3/";
+
     private MovieService service;
 
     public RestClient() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.themoviedb.org/3/")
+                .baseUrl(BASE_URL)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
