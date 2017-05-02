@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -48,6 +47,45 @@ public class MainActivity extends AppCompatActivity {
     private Subscription subscription = Subscriptions.empty();
     private Integer mPageNumber = 1;
     private Integer mItemsPerPage = 20;
+    private LinearLayoutManager layoutManager;
+    private Boolean isLoading = false;
+    private Boolean isLastPage = false;
+
+    private RecyclerView.OnScrollListener recyclerViewOnScrollListener = new RecyclerView.OnScrollListener() {
+        @Override
+        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            super.onScrollStateChanged(recyclerView, newState);
+        }
+
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            int visibleItemCount = layoutManager.getChildCount();
+            int totalItemCount = layoutManager.getItemCount();
+            int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
+
+            Timber.i("visibleItemCount: " + visibleItemCount);
+            Timber.i("totalItemCount: " + totalItemCount);
+            Timber.i("firstVisibleItemPosition: " + firstVisibleItemPosition);
+            Timber.i("isLoading: " + isLoading);
+            Timber.i("isLastPage: " + isLastPage);
+            Timber.i("PAGE_SIZE: " + PAGE_SIZE);
+
+            // when firstVisibleItemPosition == 16 (out of 20), load more
+
+            if (!isLoading && !isLastPage) {
+                if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount
+                        && firstVisibleItemPosition >= 0
+                        && totalItemCount >= PAGE_SIZE) {
+                    loadMoreItems();
+                }
+            }
+
+            if (firstVisibleItemPosition == 16) {
+                loadMoreItems();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,13 +95,14 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         Timber.i("Inside MainActivity onCreate");
-        Log.d("RCK", "inside onCreate");
 
         movieAdapter = new MovieAdapter(movieList);
-        mResults.setLayoutManager(new LinearLayoutManager(this));
+
+        layoutManager = new LinearLayoutManager(this);
+        mResults.setLayoutManager(layoutManager);
         mResults.setAdapter(movieAdapter);
 
-
+        mResults.addOnScrollListener(recyclerViewOnScrollListener);
     }
 
     @OnClick(R.id.btn_search) void search() {
@@ -77,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             mProgressSpinner.setVisibility(View.VISIBLE);
 
-            rx.Observable<SearchResponse> observable = new RestClient().getService().searchForMovie(getString(R.string.API_KEY), mPageNumber, mQueryString);
+            rx.Observable<SearchResponse> observable = new RestClient().getService().searchForMovieFirstPage(getString(R.string.API_KEY), mPageNumber, mQueryString);
 
             subscription = observable.subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
@@ -138,16 +177,6 @@ public class MainActivity extends AppCompatActivity {
                                     addMovieToList(title, description, iconUrl);
                                 }
 
-                                if (currentPage < totalPages) {
-                                    // set onScroll listener to load more data
-
-                                    // if item 19 is displayed && currentPage < totalPages
-                                    // then there is more data to load
-
-                                    // source for pagination:
-                                    // https://medium.com/@etiennelawlor/pagination-with-recyclerview-1cb7e66a502b
-                                }
-
                             } else {
                                 Toast.makeText(MainActivity.this, getString(R.string.no_results), Toast.LENGTH_SHORT).show();
                             }
@@ -166,5 +195,72 @@ public class MainActivity extends AppCompatActivity {
     private void addMovieToList(String title, String description, String iconUrl) {
         Movie movie = new Movie(title, description, iconUrl);
         movieList.add(movie);
+    }
+
+    private void loadMoreItems() {
+        isLoading = true;
+
+        mPageNumber += 1;
+
+        rx.Observable<SearchResponse> observable = new RestClient().getService().searchForMovieFirstPage(getString(R.string.API_KEY), mPageNumber, mQueryString);
+
+        subscription = observable.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<SearchResponse>() {
+
+                    String title;
+                    String description;
+                    String iconUrl;
+                    int totalResults;
+                    int currentPage;
+                    int totalPages;
+                    int totalResultsOnPage;
+                    int max;
+
+                    @Override
+                    public void onCompleted() {
+                        movieAdapter.notifyDataSetChanged();
+                        mProgressSpinner.setVisibility(GONE);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Timber.e(e);
+                    }
+
+                    @Override
+                    public void onNext(SearchResponse searchResponse) {
+
+                        totalResults = searchResponse.getTotalResults(); // 57
+                        currentPage = searchResponse.getPage(); // 2
+                        totalPages = searchResponse.getTotalPages(); // 3
+                        totalResultsOnPage = totalResults - (currentPage - 1) * mItemsPerPage; // 57 - (1)(20) => 37
+
+                        if (totalResultsOnPage < 20) { // 37 !< 20
+                            max = totalResultsOnPage;
+                        } else {
+                            max = 20;
+                        }
+
+                        for (int i = 0; i < max; i++) {
+                            title = searchResponse.getResults().get(i).getOriginalTitle().toString();
+                            description = searchResponse.getResults().get(i).getOverview().toString();
+                            iconUrl = "http://image.tmdb.org/t/p/w500" + searchResponse.getResults().get(i).getPosterPath().toString();
+                            addMovieToList(title, description, iconUrl);
+                        }
+                    }
+                });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        removeListeners();
+        mPageNumber = 1;
+        subscription.unsubscribe();
+    }
+
+    private void removeListeners(){
+        mResults.removeOnScrollListener(recyclerViewOnScrollListener);
     }
 }

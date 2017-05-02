@@ -12,9 +12,14 @@ public interface MovieService {
 
     // https://api.themoviedb.org/3/search/movie?api_key=a755518bdaba7680a8b160f485220377&page=1&query=terminator
     @GET("search/movie")
-    rx.Observable<SearchResponse> searchForMovie(@Query("api_key") String api_key,
-                                                 @Query("page") Integer page,
-                                                 @Query("query") String query);
+    rx.Observable<SearchResponse> searchForMovieFirstPage(@Query("api_key") String api_key,
+                                                          @Query("page") Integer page,
+                                                          @Query("query") String query);
+
+    @GET("search/movie")
+    rx.Observable<SearchResponse> searchForMovieNextPage(@Query("api_key") String api_key,
+                                                          @Query("page") Integer page,
+                                                          @Query("query") String query);
 
 
     // http://image.tmdb.org/t/p/w500/5JU9ytZJyR3zmClGmVm9q4Geqbd.jpg
