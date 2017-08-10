@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
             subscription.unsubscribe();
         }
 
-        mQueryString = mQuery.getText().toString().replace(" ", "%20");
+        mQueryString = mQuery.getText().toString();
 
         if (mQueryString == "" || mQueryString.isEmpty() || mQueryString == null) {
             Toast.makeText(this, getString(R.string.error_enter_query), Toast.LENGTH_LONG).show();
@@ -159,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
 
                             } else {
+
                                 Toast.makeText(MainActivity.this, getString(R.string.no_results), Toast.LENGTH_SHORT).show();
                             }
                         }
