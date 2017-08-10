@@ -1,6 +1,7 @@
 package com.robinkanatzar.findamovie.recyclerview;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -65,6 +66,9 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
             mMovieImage = (ImageView) itemView.findViewById(R.id.iv_movie_image);
 
             context = itemView.getContext();
+
+            Typeface typeface=Typeface.createFromAsset(context.getAssets(), "fonts/SpecialElite.ttf");
+            mMovieTitle.setTypeface(typeface);
         }
     }
 }

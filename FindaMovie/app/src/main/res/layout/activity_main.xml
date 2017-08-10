@@ -4,29 +4,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.robinkanatzar.findamovie.MainActivity">
-
-    <TextView
-        android:id="@+id/tv_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:text="Welcome to Find a Movie! \n Enter a query below to search for a movie."
-        android:textAlignment="center"
-        android:textSize="18sp"
-        tools:layout_editor_absoluteX="8dp"
-        tools:layout_editor_absoluteY="16dp" />
+    tools:context="com.robinkanatzar.findamovie.MainActivity"
+    android:background="@color/darkGray">
 
     <EditText
         android:id="@+id/et_query"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/tv_title"
-        android:layout_centerHorizontal="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/progress_spinner"
+        android:layout_marginTop="20dp"
         android:ems="10"
-        android:hint="type query here"
+        android:hint="search for a movie here"
         android:inputType="textPersonName"
-        android:textAlignment="center" />
+        android:textAlignment="center"
+        android:textColor="@color/offWhite"
+        android:textColorHint="@color/offWhite" />
 
     <Button
         android:id="@+id/btn_search"
@@ -34,14 +28,19 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/et_query"
         android:layout_centerHorizontal="true"
-        android:text="Search" />
+        android:layout_marginTop="10dp"
+        android:background="@color/mediumGray"
+        android:text="Search"
+        android:textColor="@color/offWhite" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/rv_results"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/btn_search"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:background="@color/darkGray" />
 
     <ProgressBar
         android:id="@+id/progress_spinner"

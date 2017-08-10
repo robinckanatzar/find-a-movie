@@ -1,6 +1,7 @@
 package com.robinkanatzar.findamovie;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -77,6 +78,9 @@ public class MainActivity extends AppCompatActivity {
         mResults.setLayoutManager(layoutManager);
         mResults.setAdapter(movieAdapter);
         mResults.addOnScrollListener(recyclerViewOnScrollListener);
+
+        Typeface typeface=Typeface.createFromAsset(getAssets(), "fonts/SpecialElite.ttf");
+        mQuery.setTypeface(typeface);
     }
 
     @OnClick(R.id.btn_search) void search() {
