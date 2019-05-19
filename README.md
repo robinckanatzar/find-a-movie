@@ -10,6 +10,3 @@ This application utilizes the following libraries:
 
 Other features of this app include:
 * Pagination
-
-# Google Play Store
-The app can be found on the Google Play Store here: https://play.google.com/store/apps/details?id=com.robinkanatzar.findamovie&hl=en
